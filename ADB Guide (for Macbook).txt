@@ -1,0 +1,48 @@
+Macbook only oops.
+
+To install ADB:
+1. Open Terminal.
+2. Install homebrew if needed by copying and pasting the following:
+	$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+3. Copy and paste the following to install adb:
+	brew install android-platform-tools
+
+Phone to laptop:
+1. Input directory: /sdcard/Notes
+2. Output directory: /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/fromPhone
+3. Open Terminal and navigate to:
+	FIRST TIME USE:
+		/Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17
+	AFTERWARDS:
+		/Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/fromPhone
+4. Plug in Android device.
+5. Copy and paste the following into Terminal:
+	adb devices (make sure it's authorized)
+	adb get-serialno (technically not needed)
+	adb pull inputdirectory outputdirectory
+FIRST TIME USE:
+6. Move Python script into the newly created folder (fromPhone)
+
+Making the needed files:
+1. Open the Python script in Sublime Text.
+2. Press command-b
+3. Move the overall teams and matches files into TeamsAndMatchesFiles folder (in ScoutScript17)
+4. Move the rankings files into RankingsFiles folder (in ScoutScript17)
+
+Laptop to phone:
+1. Input directory: Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/TeamsAndMatchesFiles
+2. Output directory: /sdcard/TeamsMatches
+3. Open Terminal and navigate to the folder
+4. Plug in Android device
+5. Copy and paste the following into Terminal:
+	adb devices
+	adb get-serialno
+	adb push inputdirectory outputdirectory
+6. Repeat the above except change .../TeamsAndMatchesFiles to .../RankingsFiles and
+	 /sdcard/TeamsMatches to /sdcard/Rankings
+
+FIRST TIME:
+Make directory on phone by adb shell mkdir ___
+
+BETWEEN RUNS:
+Delete all text files
