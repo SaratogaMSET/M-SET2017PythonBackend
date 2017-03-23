@@ -16,7 +16,7 @@ def appendFile(readFile):
 def oneTeamOneMatch():
 	global read 
 	lines = []
-	for i in range(20): #lines 0-19
+	for i in range(26): #lines 0-25
 		string = file.readline()
 		if string[-1:] == "\n":
 			lines.append(string[:-1])
@@ -28,35 +28,43 @@ def oneTeamOneMatch():
 	#reading the file and putting into dictionary, and i'm kinda stupid too
 	for i in range(0, 2):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(2, 4):
+	for i in range(2, 5):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(4, 8):
+	for i in range(5, 6):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	highStrings = (lines[8].split(",")[1]).split("-")
-	match[lines[8].split(",")[0]] = []
+	for i in range(6, 7):
+		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1].split(" ")
+		match[lines[i].split(",")[0]].pop()
+	for i in range(7, 11):
+		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
+	highStrings = (lines[11].split(",")[1]).split("-")
+	match[lines[11].split(",")[0]] = []
 	for j in range(len(highStrings)):
 		highNum = [int(s) for s in highStrings[j].split() if s.isdigit()]
 		for num in highNum:
-			match[lines[8].split(",")[0]].append(num)
-	for i in range(9, 10):
+			match[lines[11].split(",")[0]].append(num)
+	for i in range(12, 13):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	lowStrings = (lines[10].split(",")[1]).split("-")
-	match[lines[10].split(",")[0]] = []
+	lowStrings = (lines[13].split(",")[1]).split("-")
+	match[lines[13].split(",")[0]] = []
 	for j in range(len(lowStrings)):
 		lowNum = [int(s) for s in lowStrings[j].split() if s.isdigit()]
 		for num in lowNum:
-			match[lines[10].split(",")[0]].append(num)
-	for i in range(11, 12):
+			match[lines[13].split(",")[0]].append(num)
+	for i in range(14, 16):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(12, 13):
+	for i in range(16, 17):
+		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1].split(" ")
+		match[lines[i].split(",")[0]].pop()
+	for i in range(17, 18):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(13, 15):
-		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(15, 16):
-		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(16, 18):
-		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
 	for i in range(18, 20):
+		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
+	for i in range(20, 21):
+		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
+	for i in range(21, 23):
+		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
+	for i in range(23, 26):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
 
 	autoGearsMade = 0
@@ -106,6 +114,12 @@ def oneTeamOneMatch():
 	if len(match["Auto Low Goal"]) != 0: singleRobotPoints += ((match["Auto Low Goal"][0]) / 3)
 	singleRobotPoints += ((match["Teleop High Goal Total Shots"]) / 3)
 	singleRobotPoints += ((match["Teleop Low Goal Total Shots"]) / 9)
+
+	teamPressure = 0
+	teamPressure += (match["Auto High Goal"][0] + ((match["Auto Low Goal"][0]) / 3))
+	teamPressure += (((match["Teleop High Goal Total Shots"]) / 3) + ((match["Teleop Low Goal Total Shots"]) / 9))
+	match["Estimated Single Team kPa"] 
+
 	#gears required for each rotor: 1, 2, 4, 6; auto rotor turning: 60, teleop rotor turning: 40
 	totalGearsMade = autoGearsMade + teleopGearsMade
 	multiplyFactor = 0
@@ -200,6 +214,14 @@ def generateTeamOverall(teams):
 		autoLowGoals = 0
 		autoGearsMade = 0
 		autoGearsTried = 0
+		canStartingBoiler = False
+		canStartingClose = False
+		canStartingMiddle = False
+		canAutoGearBoiler = False
+		canAutoGearClose = False
+		canAutoGearMiddle = False
+		defenseRatings = 0
+		playedDefense = 0
 		teleopTotalHighGoalCycles = 0
 		teleopTotalHighGoalCycleTimeLow = 0
 		teleopTotalHighGoalCycleTimeHigh = 0
@@ -208,6 +230,10 @@ def generateTeamOverall(teams):
 		teleopTotalLowGoalCycleTimeLow = 0
 		teleopTotalLowGoalCycleTimeHigh = 0
 		teleopTotalLowGoals = 0
+		teleopPickupGear = 0
+		canTeleopGearBoiler = False
+		canTeleopGearClose = False
+		canTeleopGearMiddle = False
 		teleopGearsMade = 0
 		teleopGearsTried = 0
 		totalPressure = 0
@@ -222,11 +248,20 @@ def generateTeamOverall(teams):
 		teamOverall[key]["Matches"] = []
 		for i in range(len(teams[key])): #go through each match for each team
 			teamOverall[key]["Matches"].append(teams[key][i]["Match Number"][0])
+			if teams[key][i]["Starting Position"] == "Boiler": canStartingBoiler = True
+			if teams[key][i]["Starting Position"] == "Close": canStartingClose = True
+			if teams[key][i]["Starting Position"] == "Middle": canStartingMiddle = True
 			if teams[key][i]["Cross Baseline"] == "Yes": autoBaseline += 1
 			if len(teams[key][i]["Auto High Goal"]) != 0: autoHighGoals += teams[key][i]["Auto High Goal"][0]
 			if len(teams[key][i]["Auto Low Goal"]) != 0: autoLowGoals += teams[key][i]["Auto Low Goal"][0]
+			for j in range(len(teams[key][i]["Auto Gears Positions"])):
+				if teams[key][i]["Auto Gears Positions"][j] == "Boiler": canAutoGearBoiler = True
+				if teams[key][i]["Auto Gears Positions"][j] == "Close": canAutoGearClose = True
+				if teams[key][i]["Auto Gears Positions"][j] == "Middle": canAutoGearMiddle = True
 			autoGearsMade += int(teams[key][i]["Auto Gears Ratio"].split("/", 1)[0])
 			autoGearsTried += int(teams[key][i]["Auto Gears Ratio"].split("/", 1)[1])
+			defenseRatings += teams[key][i]["Defense"][0]
+			if teams[key][i]["Defense"][0] != 0: playedDefense += 1
 			teleopTotalHighGoalCycles += teams[key][i]["Teleop High Goal Total Cycles"]
 			for j in range(len(teams[key][i]["Teleop High Goal Shots Cycle Time"])):
 				teleopTotalHighGoalCycleTimeLow += teams[key][i]["Teleop High Goal Shots Cycle Time"][j][0]
@@ -237,6 +272,11 @@ def generateTeamOverall(teams):
 				teleopTotalLowGoalCycleTimeLow += teams[key][i]["Teleop Low Goal Shots Cycle Time"][j][0]
 				teleopTotalLowGoalCycleTimeHigh += teams[key][i]["Teleop Low Goal Shots Cycle Time"][j][1]
 			teleopTotalLowGoals += teams[key][i]["Teleop Low Goal Total Shots"]
+			if teams[key][i]["Teleop Pickup Gear"] == "Yes": teleopPickupGear += 1
+			for j in range(len(teams[key][i]["Teleop Gears Positions"])):
+				if teams[key][i]["Teleop Gears Positions"][j] == "Boiler": canTeleopGearBoiler = True
+				if teams[key][i]["Teleop Gears Positions"][j] == "Close": canTeleopGearClose = True
+				if teams[key][i]["Teleop Gears Positions"][j] == "Middle": canTeleopGearMiddle = True
 			teleopGearsMade += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[0])
 			teleopGearsTried += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[1])
 			totalPressure += teams[key][i]["Total Pressure"][0]
@@ -268,17 +308,40 @@ def generateTeamOverall(teams):
 			teamOverall[key]["Teleop Low Goal Average Shots Per Cycle"] = "N/A"
 			teamOverall[key]["Teleop Low Goal Average Cycle Time"] = "N/A"
 			lowCycleTimeLow[key] = "N/A"
+		if playedDefense != 0:
+			teamOverall[key]["Average Defense Rating Per Game"] = round((float(defenseRatings)/playedDefense), 2)
+		else:
+			teamOverall[key]["Average Defense Rating Per Game"] = "N/A"
+		startingPositions = ""
+		if canStartingBoiler == True: startingPositions += "Boiler "
+		if canStartingClose == True: startingPositions += "Close "
+		if canStartingMiddle == True: startingPositions += "Middle"
+		autoGearPositions = ""
+		if canAutoGearBoiler == True: autoGearPositions += "Boiler "
+		if canAutoGearClose == True: autoGearPositions += "Close "
+		if canAutoGearMiddle == True: autoGearPositions += "Middle"
+		teleopGearPositions = ""
+		if canTeleopGearBoiler == True: teleopGearPositions += "Boiler "
+		if canTeleopGearClose == True: teleopGearPositions += "Close "
+		if canTeleopGearMiddle == True: teleopGearPositions += "Middle"
+		teamOverall[key]["Starting Positions"] = startingPositions
 		teamOverall[key]["Cross Baseline Ratio"] = str(autoBaseline) + "/" + str(len(teams[key]))
 		teamOverall[key]["Auto Gears Ratio"] = str(autoGearsMade) + "/" + str(autoGearsTried)
+		teamOverall[key]["Auto Gears Made"] = autoGearsMade
+		teamOverall[key]["Auto Gears Positions"] = autoGearPositions
 		teamOverall[key]["Auto High Goal Total"] = autoHighGoals
 		teamOverall[key]["Auto Low Goal Total"] = autoLowGoals
+		teamOverall[key]["Playing Defense Ratio"] = str(playedDefense) + "/" + str(len(teams[key]))
 		teamOverall[key]["Teleop High Goal Total Cycles"] = teleopTotalHighGoalCycles
 		teamOverall[key]["Teleop High Goal Average Cycles Per Game"] = round(float(teleopTotalHighGoalCycles)/len(teams[key]), 2)
 		teamOverall[key]["Teleop High Goal Total Shots"] = teleopTotalHighGoals
 		teamOverall[key]["Teleop Low Goal Total Cycles"] = teleopTotalLowGoalCycles
 		teamOverall[key]["Teleop Low Goal Average Cycles Per Game"] = round(float(teleopTotalLowGoalCycles)/len(teams[key]), 2)
+		teamOverall[key]["Teleop Pickup Gear Ratio"] = str(teleopPickupGear) + "/" + str(len(teams[key]))
 		teamOverall[key]["Teleop Low Goal Total Shots"] = teleopTotalLowGoals
+		teamOverall[key]["Teleop Gears Positions"] = teleopGearPositions
 		teamOverall[key]["Teleop Gears Ratio"] = str(teleopGearsMade) + "/" + str(teleopGearsTried)
+		teamOverall[key]["Teleop Gears Made"] = teleopGearsMade
 		teamOverall[key]["Reached 40 kPa Ratio"] = str(totalReach40kPa) + "/" + str(len(teams[key]))
 		teamOverall[key]["Average Total Pressure Per Game"] = round(float(totalPressure)/len(teams[key]), 2)
 		teamOverall[key]["Average Rotors Turning Per Game"] = round(float(totalRotorsTurning)/len(teams[key]), 2)
@@ -294,10 +357,14 @@ def generateTeamTextFiles(teamOverall):
 	for key in teamOverall:
 		team = open(key + ".txt", "a")
 		strings = [
+			"Starting Positions",
 			"Cross Baseline Ratio",
+			"Auto Gears Positions",
 			"Auto Gears Ratio",
 			"Auto High Goal Total",
 			"Auto Low Goal Total",
+			"Average Defense Rating Per Game",
+			"Playing Defense Ratio",
 			"Teleop High Goal Total Cycles",
 			"Teleop High Goal Average Cycles Per Game",
 			"Teleop High Goal Average Shots Per Cycle",
@@ -308,6 +375,8 @@ def generateTeamTextFiles(teamOverall):
 			"Teleop Low Goal Average Shots Per Cycle",
 			"Teleop Low Goal Total Shots",
 			"Teleop Low Goal Average Cycle Time",
+			"Teleop Pickup Gear Ratio",
+			"Teleop Gears Positions",
 			"Teleop Gears Ratio",
 			"Reached 40 kPa Ratio",
 			"Average Total Pressure Per Game",
@@ -335,11 +404,14 @@ def generateMatchesFiles(teams):
 			oneTeamOneMatchFile = open(team + "_" + str(teams[team][match]["Match Number"][0]) + ".txt", "a")
 			strings = [
 				"Scouter Name",
+				"Starting Position",
 				"Cross Baseline",
+				"Auto Gears Positions",
 				"Auto Gears",
 				"Auto Gears Ratio",
 				"Auto High Goal",
 				"Auto Low Goal",
+				"Defense",
 				"Teleop High Goal Shots Per Cycle",
 				"Teleop High Goal Shots Cycle Time",
 				"Teleop High Goal Total Shots",
@@ -348,6 +420,8 @@ def generateMatchesFiles(teams):
 				"Teleop Low Goal Shots Cycle Time",
 				"Teleop Low Goal Total Shots",
 				"Teleop Low Goal Total Cycles",
+				"Teleop Pickup Gear",
+				"Teleop Gears Positions",
 				"Teleop Gears",
 				"Teleop Gears Ratio",
 				"Reached 40 kPa",
@@ -363,7 +437,7 @@ def generateMatchesFiles(teams):
 			for data in strings:
 				if isinstance(teams[team][match][data], float) or isinstance(teams[team][match][data], int):
 					oneTeamOneMatchFile.write(data + ", " + str(teams[team][match][data]) + "\n")
-				elif data == "Auto High Goal" or data == "Auto Low Goal" or data == "Total Pressure" or data == "Rotors Turning" or data == "Total Points" or data == "Ranking Points":
+				elif data == "Auto High Goal" or data == "Auto Low Goal" or data == "Total Pressure" or data == "Rotors Turning" or data == "Total Points" or data == "Ranking Points" or data == "Defense":
 					if len(teams[team][match][data]) != 0:
 						oneTeamOneMatchFile.write(data + ", " + str(teams[team][match][data][0]) + "\n")
 					else:
@@ -373,6 +447,12 @@ def generateMatchesFiles(teams):
 					if len(teams[team][match][data]) != 0:
 						for number in teams[team][match][data]:
 							oneTeamOneMatchFile.write(str(number) + " ")
+					oneTeamOneMatchFile.write("\n")
+				elif data == "Auto Gears Positions" or data == "Teleop Gears Positions":
+					oneTeamOneMatchFile.write(data + ", ")
+					if len(teams[team][match][data]) != 0:
+						for position in teams[team][match][data]:
+							oneTeamOneMatchFile.write(position + " ")
 					oneTeamOneMatchFile.write("\n")
 				elif data == "Teleop High Goal Shots Cycle Time" or data == "Teleop Low Goal Shots Cycle Time":
 					oneTeamOneMatchFile.write(data + ", ")
@@ -393,8 +473,10 @@ def generateRankings(teamOverall):
 	categories = [
 		"Cross Baseline Ratio",
 		"Auto Gears Ratio",
+		"Auto Gears Made",
 		"Auto High Goal Total",
 		"Auto Low Goal Total",
+		"Average Defense Rating Per Game",
 		"Teleop High Goal Total Cycles",
 		"Teleop High Goal Average Cycles Per Game",
 		"Teleop High Goal Average Shots Per Cycle",
@@ -405,7 +487,9 @@ def generateRankings(teamOverall):
 		"Teleop Low Goal Average Shots Per Cycle",
 		"Teleop Low Goal Total Shots",
 		"Teleop Low Goal Average Cycle Time",
+		"Teleop Pickup Gear Ratio",
 		"Teleop Gears Ratio",
+		"Teleop Gears Made",
 		"Reached 40 kPa Ratio",
 		"Average Total Pressure Per Game",
 		"Average Rotors Turning Per Game",
@@ -419,6 +503,8 @@ def generateRankings(teamOverall):
 	autoHighGoals = []
 	autoLowGoals = []
 	autoGearsRatio = []
+	autoGearsMade = []
+	averageDefenseRatings = []
 	teleopTotalHighGoalCycles = []
 	teleopAverageHighGoalCycles = []
 	teleopAverageHighGoalShotsPerCycle = []
@@ -429,7 +515,9 @@ def generateRankings(teamOverall):
 	teleopAverageLowGoalShotsPerCycle = []
 	teleopAverageLowGoalCycleTimeLow = []
 	teleopTotalLowGoals = []
+	teleopPickupGearRatio = []
 	teleopGearsRatio = []
+	teleopGearsMade = []
 	averagePressure = []
 	reach40kPaRatio = []
 	averageRotorsTurning = []
@@ -442,19 +530,23 @@ def generateRankings(teamOverall):
 	variables = [
 		baselineRatio,
 		autoGearsRatio,
+		autoGearsMade,
 		autoHighGoals,
 		autoLowGoals,
+		averageDefenseRatings,
 		teleopTotalHighGoalCycles,
 		teleopAverageHighGoalCycles,
 		teleopAverageHighGoalShotsPerCycle,
-		teleopTotalHighGoals,
 		teleopAverageHighGoalCycleTimeLow,
+		teleopTotalHighGoals,
 		teleopTotalLowGoalCycles,
 		teleopAverageLowGoalCycles,
 		teleopAverageLowGoalShotsPerCycle,
-		teleopTotalLowGoals,
 		teleopAverageLowGoalCycleTimeLow,
+		teleopTotalLowGoals,
+		teleopPickupGearRatio,
 		teleopGearsRatio,
+		teleopGearsMade,
 		reach40kPaRatio,
 		averagePressure,
 		averageRotorsTurning,
@@ -474,7 +566,7 @@ def generateRankings(teamOverall):
 				if int(ratio.split("/", 1)[1]) != 0:
 					variables[number].append(float(ratio.split("/", 1)[0])/int(ratio.split("/", 1)[1]))
 				else:
-					variables[number].append("N/A")
+					variables[number].append(0.0)
 			bubbleSortHighToLow(variables[number], teamNumbers)
 			for j in range(len(teamNumbers)):
 				rankings[data][j + 1] = teamNumbers[j]
@@ -551,12 +643,11 @@ def bubbleSortHighToLow(values, numbers): #biggest to smallest
 				numbers[i + 1] = tempNumber
 
 
-# generateOneFile() #generates a file with all the appended text files!  NOTE: must delete the file generated to run the code again
-# allFile.close()
-# teams = generateDict("oneFile.txt")
-teams = generateDict("b3.txt")
+generateOneFile() #generates a file with all the appended text files!  NOTE: must delete the file generated to run the code again
+allFile.close()
+teams = generateDict("oneFile.txt")
 print teams
-print "\n"
+# print "\n"
 overall = generateTeamOverall(teams)
 print overall
 print "\n"

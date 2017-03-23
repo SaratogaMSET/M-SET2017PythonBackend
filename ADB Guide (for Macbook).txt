@@ -3,12 +3,14 @@ Macbook only oops.
 To install ADB:
 1. Open Terminal.
 2. Install homebrew if needed by copying and pasting the following:
-	$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 3. Copy and paste the following to install adb:
 	brew install android-platform-tools
 
 Phone to laptop:
-1. Input directory: /sdcard/Notes
+1. Input directory: 
+	/sdcard/Notes-SAC 
+	/sdcard/Notes-Vegas
 2. Output directory: /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/fromPhone
 3. Open Terminal and navigate to:
 	FIRST TIME USE:
@@ -30,7 +32,7 @@ Making the needed files:
 4. Move the rankings files into RankingsFiles folder (in ScoutScript17)
 
 Laptop to phone:
-1. Input directory: Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/TeamsAndMatchesFiles
+1. Input directory: /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/TeamsAndMatchesFiles
 2. Output directory: /sdcard/TeamsMatches
 3. Open Terminal and navigate to the folder
 4. Plug in Android device
@@ -46,3 +48,10 @@ Make directory on phone by adb shell mkdir ___
 
 BETWEEN RUNS:
 Delete all text files
+
+COMMANDS:
+adb pull sdcard/Notes-SAC /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/fromPhone
+adb pull sdcard/Notes-Vegas /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/fromPhone
+
+adb push /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/TeamsAndMatchesFiles sdcard/TeamsMatches
+adb push /Users/candacechiang/Documents/Other/FRC/2016-2017/ScoutScript17/RankingsFiles sdcard/Rankings
