@@ -51,7 +51,9 @@ def oneTeamOneMatch():
 		lowNum = [int(s) for s in lowStrings[j].split() if s.isdigit()]
 		for num in lowNum:
 			match[lines[13].split(",")[0]].append(num)
-	for i in range(14, 16):
+	for i in range(14, 15):
+		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
+	for i in range(15, 16):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
 	for i in range(16, 17):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1].split(" ")
@@ -116,9 +118,10 @@ def oneTeamOneMatch():
 	singleRobotPoints += ((match["Teleop Low Goal Total Shots"]) / 9)
 
 	teamPressure = 0
-	teamPressure += (match["Auto High Goal"][0] + ((match["Auto Low Goal"][0]) / 3))
+	if len(match["Auto High Goal"]) != 0: teamPressure += match["Auto High Goal"][0]
+	if len(match["Auto Low Goal"]) != 0: teamPressure += ((match["Auto Low Goal"][0]) / 3)
 	teamPressure += (((match["Teleop High Goal Total Shots"]) / 3) + ((match["Teleop Low Goal Total Shots"]) / 9))
-	match["Estimated Single Team kPa"] 
+	match["Estimated Single Team kPa"] = teamPressure
 
 	#gears required for each rotor: 1, 2, 4, 6; auto rotor turning: 60, teleop rotor turning: 40
 	totalGearsMade = autoGearsMade + teleopGearsMade
@@ -237,6 +240,7 @@ def generateTeamOverall(teams):
 		teleopGearsMade = 0
 		teleopGearsTried = 0
 		totalPressure = 0
+		teamPressure = 0
 		totalReach40kPa = 0
 		totalRotorsTurning = 0
 		totalTakeoffs = 0
@@ -280,6 +284,7 @@ def generateTeamOverall(teams):
 			teleopGearsMade += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[0])
 			teleopGearsTried += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[1])
 			totalPressure += teams[key][i]["Total Pressure"][0]
+			teamPressure += teams[key][i]["Estimated Single Team kPa"]
 			if teams[key][i]["Reached 40 kPa"] == "Yes": totalReach40kPa += 1
 			totalRotorsTurning += teams[key][i]["Rotors Turning"][0]
 			if teams[key][i]["Takeoff"] == "Yes": totalTakeoffs += 1
@@ -344,6 +349,7 @@ def generateTeamOverall(teams):
 		teamOverall[key]["Teleop Gears Made"] = teleopGearsMade
 		teamOverall[key]["Reached 40 kPa Ratio"] = str(totalReach40kPa) + "/" + str(len(teams[key]))
 		teamOverall[key]["Average Total Pressure Per Game"] = round(float(totalPressure)/len(teams[key]), 2)
+		teamOverall[key]["Average Estimated Single Team kPa Per Game"] = round(float(teamPressure)/len(teams[key]), 2)
 		teamOverall[key]["Average Rotors Turning Per Game"] = round(float(totalRotorsTurning)/len(teams[key]), 2)
 		teamOverall[key]["Takeoff Ratio"] = str(totalTakeoffs) + "/" + str(len(teams[key]))
 		teamOverall[key]["Average Alliance Total Points Per Game"] = round(float(totalAlliancePoints)/len(teams[key]), 2)
@@ -380,6 +386,7 @@ def generateTeamTextFiles(teamOverall):
 			"Teleop Gears Ratio",
 			"Reached 40 kPa Ratio",
 			"Average Total Pressure Per Game",
+			"Average Estimated Single Team kPa Per Game",
 			"Average Rotors Turning Per Game",
 			"Takeoff Ratio",
 			"Average Alliance Total Points Per Game",
@@ -404,6 +411,7 @@ def generateMatchesFiles(teams):
 			oneTeamOneMatchFile = open(team + "_" + str(teams[team][match]["Match Number"][0]) + ".txt", "a")
 			strings = [
 				"Scouter Name",
+				"Alliance",
 				"Starting Position",
 				"Cross Baseline",
 				"Auto Gears Positions",
@@ -426,6 +434,7 @@ def generateMatchesFiles(teams):
 				"Teleop Gears Ratio",
 				"Reached 40 kPa",
 				"Total Pressure",
+				"Estimated Single Team kPa",
 				"Rotors Turning",
 				"Takeoff",
 				"Total Points",
@@ -460,9 +469,10 @@ def generateMatchesFiles(teams):
 						for cycle in range(len(teams[team][match][data])):
 							oneTeamOneMatchFile.write(str(teams[team][match][data][cycle][0]) + " - " + str(teams[team][match][data][cycle][1]) + " ")
 					oneTeamOneMatchFile.write("\n")
-				elif data == "Notes":
-					oneTeamOneMatchFile.write(data + ", " + teams[team][match][data])
+				# elif data == "Notes":
+				# 	oneTeamOneMatchFile.write(data + ", " + teams[team][match][data])
 				else:
+					print data
 					oneTeamOneMatchFile.write(data + ", " + teams[team][match][data] + "\n")
 
 def generateRankings(teamOverall):
@@ -492,6 +502,7 @@ def generateRankings(teamOverall):
 		"Teleop Gears Made",
 		"Reached 40 kPa Ratio",
 		"Average Total Pressure Per Game",
+		"Average Estimated Single Team kPa Per Game",
 		"Average Rotors Turning Per Game",
 		"Takeoff Ratio",
 		"Average Alliance Total Points Per Game",
@@ -519,6 +530,7 @@ def generateRankings(teamOverall):
 	teleopGearsRatio = []
 	teleopGearsMade = []
 	averagePressure = []
+	averageTeamPressure = []
 	reach40kPaRatio = []
 	averageRotorsTurning = []
 	takeoffRatio = []
@@ -549,6 +561,7 @@ def generateRankings(teamOverall):
 		teleopGearsMade,
 		reach40kPaRatio,
 		averagePressure,
+		averageTeamPressure,
 		averageRotorsTurning,
 		takeoffRatio,
 		averageAlliancePoints,
@@ -642,17 +655,124 @@ def bubbleSortHighToLow(values, numbers): #biggest to smallest
 				values[i + 1] = tempValue
 				numbers[i + 1] = tempNumber
 
+def generateMatchesWithTeams(teams):
+	matchTeams = {}
+	matchTeams[0] = []
+	for key in teams:
+		for i in range(len(teams[key])):
+			existingMatchNumber = False
+			for number in matchTeams:
+				if teams[key][i]["Match Number"][0] == number:
+					matchTeams[number].append(key)
+					matchTeams[number].append(i)
+					existingMatchNumber = True
+			if existingMatchNumber == False:
+				matchTeams[teams[key][i]["Match Number"][0]] = []
+				matchTeams[teams[key][i]["Match Number"][0]].append(key)
+				matchTeams[teams[key][i]["Match Number"][0]].append(i)
+	for key in matchTeams:
+		for i in range(len(matchTeams[key])):
+			if i % 2 == 0:
+				first = matchTeams[key][i]
+				second = matchTeams[key][i + 1]
+				matchTeams[key][i / 2] = [first, second]
+		halfLength = (len(matchTeams[key]) / 2)
+		for i in range(halfLength):
+			matchTeams[key].pop(halfLength)
+	del(matchTeams[0])
+	return matchTeams
+
+def checkConsistencyInMatch(matchTeams, teams):
+	categories = [
+		"Total Pressure",
+		"Total Points",
+		"Ranking Points",
+		"Rotors Turning"
+	]
+	for matchNumber in matchTeams:
+		bluePressure = []
+		blueMatch = []
+		blueRanking = []
+		blueRotors = []
+		redPressure = []
+		redMatch = []
+		redRanking = []
+		redRotors = []
+
+		variables = [
+			bluePressure,
+			blueMatch,
+			blueRanking,
+			blueRotors,
+			redPressure,
+			redMatch,
+			redRanking,
+			redRotors
+		]
+		for i in range(len(matchTeams[matchNumber])):
+			if teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]]["Alliance"] == "Blue":
+				for j in range(len(categories)):
+					if len(teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]][categories[j]]) != 0:
+						variables[j].append(teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]][categories[j]][0])
+					else:
+						variables[j].append(0)
+			if teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]]["Alliance"] == "Red":
+				for j in range(len(categories)):
+					if len(teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]][categories[j]]) != 0:
+						variables[j + 4].append(teams[matchTeams[matchNumber][i][0]][matchTeams[matchNumber][i][1]][categories[j]][0])
+					else:
+						variables[j + 4].append(0)
+		bluePressureEqual = True
+		blueMatchEqual = True
+		blueRankingEqual = True
+		blueRotorsEqual = True
+		redPressureEqual = True
+		redMatchEqual = True
+		redRankingEqual = True
+		redRotorsEqual = True
+		booleans = [
+			bluePressureEqual,
+			blueMatchEqual,
+			blueRankingEqual,
+			blueRotorsEqual,
+			redPressureEqual,
+			redMatchEqual,
+			redRankingEqual,
+			redRotorsEqual
+		]
+		for j in range(len(variables)):
+			for onePass in range(len(variables[j]) - 1, 0, -1):
+				for i in range(0, onePass):
+					if variables[j][i] != variables[j][onePass]:
+						booleans[j] = False
+			if booleans[j] == False:
+				if j < 4:
+					print "Inconsistency in " + categories[j % 4] + " of Match Number " + str(matchNumber) + ", Blue Alliance"
+					print variables[j]
+				elif j < 8:
+					print "Inconsistency in " + categories[j % 4] + " of Match Number " + str(matchNumber) + ", Red Alliance"
+					print variables[j]
+
+def checkIfDuplicateMatches(teams):
+	for key in teams:
+		for onePass in range(len(teams[key]) - 1, 0, -1):
+				for i in range(0, onePass):
+					if teams[key][onePass]["Match Number"][0] == teams[key][i]["Match Number"][0]:
+						print "Duplicate Matches: Team " + key + ", Match " + str(teams[key][onePass]["Match Number"][0])
+
 
 generateOneFile() #generates a file with all the appended text files!  NOTE: must delete the file generated to run the code again
 allFile.close()
 teams = generateDict("oneFile.txt")
 print teams
-# print "\n"
-overall = generateTeamOverall(teams)
-print overall
 print "\n"
-generateTeamTextFiles(overall)
-generateMatchesFiles(teams)
-rankings = generateRankings(overall)
-print rankings
-generateRankingsFiles(rankings, overall)
+matchTeams = generateMatchesWithTeams(teams)
+print matchTeams
+print "\n"
+checkConsistencyInMatch(matchTeams, teams)
+checkIfDuplicateMatches(teams)
+# overall = generateTeamOverall(teams)
+# generateTeamTextFiles(overall)
+# generateMatchesFiles(teams)
+# rankings = generateRankings(overall)
+# generateRankingsFiles(rankings, overall)
