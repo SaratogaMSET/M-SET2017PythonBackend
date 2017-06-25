@@ -16,7 +16,7 @@ def appendFile(readFile):
 def oneTeamOneMatch():
 	global read 
 	lines = []
-	for i in range(26): #lines 0-25
+	for i in range(29): #lines 0-28
 		string = file.readline()
 		if string[-1:] == "\n":
 			lines.append(string[:-1])
@@ -30,9 +30,7 @@ def oneTeamOneMatch():
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
 	for i in range(2, 5):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(5, 6):
-		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(6, 7):
+	for i in range(5, 7):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1].split(" ")
 		match[lines[i].split(",")[0]].pop()
 	for i in range(7, 11):
@@ -53,9 +51,7 @@ def oneTeamOneMatch():
 			match[lines[13].split(",")[0]].append(num)
 	for i in range(14, 15):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(15, 16):
-		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(16, 17):
+	for i in range(15, 17):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1].split(" ")
 		match[lines[i].split(",")[0]].pop()
 	for i in range(17, 18):
@@ -64,20 +60,38 @@ def oneTeamOneMatch():
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
 	for i in range(20, 21):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
-	for i in range(21, 23):
+	for i in range(21, 22):
 		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
-	for i in range(23, 26):
+	for i in range(22, 23):
 		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
+	for i in range(23, 25):
+		match[lines[i].split(",")[0]] = [int(s) for s in lines[i].split() if s.isdigit()]
+	for i in range(25, 29):
+		match[lines[i].split(",")[0]] = lines[i].split(", ", 1)[1]
+
+	for i in range(len(match["Auto Gears"])):
+		if match["Auto Gears"][i].isdigit():
+			match["Auto Gears"][i] = int(match["Auto Gears"][i]) 
+
+	for i in range(len(match["Teleop Gears"])):
+		if match["Teleop Gears"][i].isdigit():
+			match["Teleop Gears"][i] = int(match["Teleop Gears"][i]) 
+
+	totalPilotDrops = 0
 
 	autoGearsMade = 0
 	for i in match["Auto Gears"]:
 		if i == 1: autoGearsMade += 1
+		if i == "X": totalPilotDrops += 1
 	match["Auto Gears Ratio"] = str(autoGearsMade) + "/" + str(len(match["Auto Gears"]))
 
 	teleopGearsMade = 0
 	for i in match["Teleop Gears"]:
 		if i == 1: teleopGearsMade += 1
+		if i == "X": totalPilotDrops += 1
 	match["Teleop Gears Ratio"] = str(teleopGearsMade) + "/" + str(len(match["Teleop Gears"]))
+
+	match["Total Pilot Gear Drops"] = totalPilotDrops
 
 	highGoalScores = 0
 	for i in range(len(match["Teleop High Goal Shots Per Cycle"])):
@@ -147,7 +161,10 @@ def sortByTeam(allMatches):
 	teamNumber = allMatches[0]["Team Number"]
 	i = 0
 	while i < len(allMatches): #make sure index doesn't go out of bounds
-		if allMatches[i]["Team Number"] == teamNumber:
+		if allMatches[i]["Starting Position"] == "No Show":
+			del(allMatches[i])
+			i -= 1
+		elif allMatches[i]["Team Number"] == teamNumber:
 			team.append(allMatches[i])
 			del(allMatches[i])
 			i -= 1
@@ -191,7 +208,6 @@ def generateDict(fileName):
 	while read: #text file names: r1.txt, r2.txt, r3.txt, b1.txt, b2.txt, b3.txt
 		matches.append(oneTeamOneMatch())
 	unsortedTeams = {}
-	i = 0
 	while len(matches) > 0:
 		team = sortByTeam(matches)
 		num = str(team[0]["Team Number"][0])
@@ -244,12 +260,18 @@ def generateTeamOverall(teams):
 		totalReach40kPa = 0
 		totalRotorsTurning = 0
 		totalTakeoffs = 0
+		totalPenalties = 0
 		totalAlliancePoints = 0
 		totalSingleRobotPoints = 0
 		totalRankingPoints = 0
 		totalWins = 0
+		totalPilotDrops = 0
+		receivedYellowCard = False
 		teamOverall[key] = {} #dictionary in each key of teamOverall
 		teamOverall[key]["Matches"] = []
+		teamOverall[key]["Matches with Penalties"] = []
+		pilotNotes = ""
+		notes = ""
 		for i in range(len(teams[key])): #go through each match for each team
 			teamOverall[key]["Matches"].append(teams[key][i]["Match Number"][0])
 			if teams[key][i]["Starting Position"] == "Boiler": canStartingBoiler = True
@@ -283,16 +305,23 @@ def generateTeamOverall(teams):
 				if teams[key][i]["Teleop Gears Positions"][j] == "Middle": canTeleopGearMiddle = True
 			teleopGearsMade += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[0])
 			teleopGearsTried += int(teams[key][i]["Teleop Gears Ratio"].split("/", 1)[1])
+			totalPilotDrops += teams[key][i]["Total Pilot Gear Drops"]
 			totalPressure += teams[key][i]["Total Pressure"][0]
 			teamPressure += teams[key][i]["Estimated Single Team kPa"]
 			if teams[key][i]["Reached 40 kPa"] == "Yes": totalReach40kPa += 1
 			totalRotorsTurning += teams[key][i]["Rotors Turning"][0]
 			if teams[key][i]["Takeoff"] == "Yes": totalTakeoffs += 1
+			totalPenalties += teams[key][i]["Penalty"][0]
+			if teams[key][i]["Penalty"][0] != 0:
+				teamOverall[key]["Matches with Penalties"].append(teams[key][i]["Match Number"][0])
 			totalAlliancePoints += teams[key][i]["Total Points"][0]
 			totalSingleRobotPoints += teams[key][i]["Estimated Single Robot Points"]
 			totalRankingPoints += teams[key][i]["Ranking Points"][0]
 			if teams[key][i]["Result"] == "Win": totalWins += 1
 			elif teams[key][i]["Result"] == "Tie": totalWins += 0.5
+			pilotNotes += teams[key][i]["Pilot Notes"] + "\n"
+			if i == len(teams[key]) - 1: notes += teams[key][i]["Notes"]
+			else: notes += teams[key][i]["Notes"] + "\n"
 		if teleopTotalHighGoalCycles != 0:
 			averageHighGoalCycleTimeLow = round(float(teleopTotalHighGoalCycleTimeLow)/teleopTotalHighGoalCycles, 2)
 			averageHighGoalCycleTimeHigh = round(float(teleopTotalHighGoalCycleTimeHigh)/teleopTotalHighGoalCycles, 2)
@@ -347,15 +376,19 @@ def generateTeamOverall(teams):
 		teamOverall[key]["Teleop Gears Positions"] = teleopGearPositions
 		teamOverall[key]["Teleop Gears Ratio"] = str(teleopGearsMade) + "/" + str(teleopGearsTried)
 		teamOverall[key]["Teleop Gears Made"] = teleopGearsMade
+		teamOverall[key]["Average Pilot Gear Drops Per Game"] = round(float(totalPilotDrops)/len(teams[key]), 2)
 		teamOverall[key]["Reached 40 kPa Ratio"] = str(totalReach40kPa) + "/" + str(len(teams[key]))
 		teamOverall[key]["Average Total Pressure Per Game"] = round(float(totalPressure)/len(teams[key]), 2)
 		teamOverall[key]["Average Estimated Single Team kPa Per Game"] = round(float(teamPressure)/len(teams[key]), 2)
 		teamOverall[key]["Average Rotors Turning Per Game"] = round(float(totalRotorsTurning)/len(teams[key]), 2)
 		teamOverall[key]["Takeoff Ratio"] = str(totalTakeoffs) + "/" + str(len(teams[key]))
+		teamOverall[key]["Average Penalties Per Game"] = round(float(totalPenalties)/len(teams[key]), 2)
 		teamOverall[key]["Average Alliance Total Points Per Game"] = round(float(totalAlliancePoints)/len(teams[key]), 2)
 		teamOverall[key]["Average Single Robot Total Points Per Game"] = round(float(totalSingleRobotPoints)/len(teams[key]), 2)
 		teamOverall[key]["Average Ranking Points Per Game"] = round(float(totalRankingPoints)/len(teams[key]), 2)
 		teamOverall[key]["Winning Ratio"] = str(totalWins) + "/" + str(len(teams[key]))
+		teamOverall[key]["Pilot Notes"] = pilotNotes
+		teamOverall[key]["Notes"] = notes
 
 	return teamOverall
 
@@ -384,24 +417,32 @@ def generateTeamTextFiles(teamOverall):
 			"Teleop Pickup Gear Ratio",
 			"Teleop Gears Positions",
 			"Teleop Gears Ratio",
+			"Average Pilot Gear Drops Per Game",
 			"Reached 40 kPa Ratio",
 			"Average Total Pressure Per Game",
 			"Average Estimated Single Team kPa Per Game",
 			"Average Rotors Turning Per Game",
 			"Takeoff Ratio",
+			"Average Penalties Per Game",
 			"Average Alliance Total Points Per Game",
 			"Average Single Robot Total Points Per Game",
 			"Average Ranking Points Per Game",
 			"Winning Ratio",
-			"Matches"
+			"Matches",
+			"Matches with Penalties",
+			"Pilot Notes",
+			"Notes"
 			]
 		for data in strings:
 			if isinstance(teamOverall[key][data], float) or isinstance(teamOverall[key][data], int):
 				team.write(data + ", " + str(teamOverall[key][data]) + "\n")
-			elif data == "Matches":
+			elif data == "Matches" or data == "Matches with Penalties":
 				team.write(data + ", ")
-				for number in teamOverall[key]["Matches"]:
+				for number in teamOverall[key][data]:
 					team.write(str(number) + " ")
+				team.write("\n")
+			elif data == "Pilot Notes" or data == "Notes":
+				team.write(data + ", " + teamOverall[key][data])
 			else:
 				team.write(data + ", " + teamOverall[key][data] + "\n")
 
@@ -432,30 +473,35 @@ def generateMatchesFiles(teams):
 				"Teleop Gears Positions",
 				"Teleop Gears",
 				"Teleop Gears Ratio",
+				"Total Pilot Gear Drops",
 				"Reached 40 kPa",
 				"Total Pressure",
 				"Estimated Single Team kPa",
 				"Rotors Turning",
 				"Takeoff",
+				"Penalty",
+				"Yellow or Red Card",
 				"Total Points",
 				"Estimated Single Robot Points",
 				"Ranking Points",
 				"Result",
+				"Pilot Notes",
 				"Notes",
 			]
 			for data in strings:
 				if isinstance(teams[team][match][data], float) or isinstance(teams[team][match][data], int):
 					oneTeamOneMatchFile.write(data + ", " + str(teams[team][match][data]) + "\n")
-				elif data == "Auto High Goal" or data == "Auto Low Goal" or data == "Total Pressure" or data == "Rotors Turning" or data == "Total Points" or data == "Ranking Points" or data == "Defense":
+				elif data == "Auto High Goal" or data == "Auto Low Goal" or data == "Total Pressure" or data == "Rotors Turning" or data == "Total Points" or data == "Ranking Points" or data == "Defense" or data == "Penalty":
 					if len(teams[team][match][data]) != 0:
 						oneTeamOneMatchFile.write(data + ", " + str(teams[team][match][data][0]) + "\n")
 					else:
-						oneTeamOneMatchFile.write(data + ", ")
+						oneTeamOneMatchFile.write(data + ", " + "\n")
 				elif data == "Auto Gears" or data == "Teleop Gears" or data == "Teleop High Goal Shots Per Cycle" or data == "Teleop Low Goal Shots Per Cycle":
 					oneTeamOneMatchFile.write(data + ", ")
 					if len(teams[team][match][data]) != 0:
 						for number in teams[team][match][data]:
-							oneTeamOneMatchFile.write(str(number) + " ")
+							if number == "X": oneTeamOneMatchFile.write(number + " ")
+							else: oneTeamOneMatchFile.write(str(number) + " ")
 					oneTeamOneMatchFile.write("\n")
 				elif data == "Auto Gears Positions" or data == "Teleop Gears Positions":
 					oneTeamOneMatchFile.write(data + ", ")
@@ -469,10 +515,9 @@ def generateMatchesFiles(teams):
 						for cycle in range(len(teams[team][match][data])):
 							oneTeamOneMatchFile.write(str(teams[team][match][data][cycle][0]) + " - " + str(teams[team][match][data][cycle][1]) + " ")
 					oneTeamOneMatchFile.write("\n")
-				# elif data == "Notes":
-				# 	oneTeamOneMatchFile.write(data + ", " + teams[team][match][data])
+				elif data == "Notes":
+					oneTeamOneMatchFile.write(data + ", " + teams[team][match][data])
 				else:
-					print data
 					oneTeamOneMatchFile.write(data + ", " + teams[team][match][data] + "\n")
 
 def generateRankings(teamOverall):
@@ -500,11 +545,13 @@ def generateRankings(teamOverall):
 		"Teleop Pickup Gear Ratio",
 		"Teleop Gears Ratio",
 		"Teleop Gears Made",
+		"Average Pilot Gear Drops Per Game",
 		"Reached 40 kPa Ratio",
 		"Average Total Pressure Per Game",
 		"Average Estimated Single Team kPa Per Game",
 		"Average Rotors Turning Per Game",
 		"Takeoff Ratio",
+		"Average Penalties Per Game",
 		"Average Alliance Total Points Per Game",
 		"Average Single Robot Total Points Per Game",
 		"Average Ranking Points Per Game",
@@ -529,11 +576,13 @@ def generateRankings(teamOverall):
 	teleopPickupGearRatio = []
 	teleopGearsRatio = []
 	teleopGearsMade = []
+	averagePilotDrops = []
 	averagePressure = []
 	averageTeamPressure = []
 	reach40kPaRatio = []
 	averageRotorsTurning = []
 	takeoffRatio = []
+	averagePenalties = []
 	averageAlliancePoints = []
 	averageSingleRobotPoints = []
 	averageRankingPoints = []
@@ -559,10 +608,12 @@ def generateRankings(teamOverall):
 		teleopPickupGearRatio,
 		teleopGearsRatio,
 		teleopGearsMade,
+		averagePilotDrops,
 		reach40kPaRatio,
 		averagePressure,
 		averageTeamPressure,
 		averageRotorsTurning,
+		averagePenalties,
 		takeoffRatio,
 		averageAlliancePoints,
 		averageSingleRobotPoints,
@@ -574,13 +625,18 @@ def generateRankings(teamOverall):
 		data = categories[number]
 		rankings[data] = {}
 		if data[-5:] == "Ratio":
+			backup = []
 			for i in range(len(teamNumbers)):
 				ratio = teamOverall[teamNumbers[i]][data]
 				if int(ratio.split("/", 1)[1]) != 0:
-					variables[number].append(float(ratio.split("/", 1)[0])/int(ratio.split("/", 1)[1]))
+					# variables[number].append(float(ratio.split("/", 1)[0])/int(ratio.split("/", 1)[1]))
+					variables[number].append(int(ratio.split("/", 1)[0]))
+					backup.append(int(ratio.split("/", 1)[1]))
 				else:
-					variables[number].append(0.0)
-			bubbleSortHighToLow(variables[number], teamNumbers)
+					variables[number].append("N/A")
+					backup.append("N/A")
+			# bubbleSortHighToLow(variables[number], teamNumbers)
+			bubbleSortHighToLowThree(variables[number], teamNumbers, backup)
 			for j in range(len(teamNumbers)):
 				rankings[data][j + 1] = teamNumbers[j]
 		elif data == "Teleop High Goal Average Cycle Time" or data == "Teleop Low Goal Average Cycle Time":
@@ -589,6 +645,12 @@ def generateRankings(teamOverall):
 					variables[number].append(highCycleTimeLow[teamNumbers[i]])
 				elif data == "Teleop Low Goal Average Cycle Time":
 					variables[number].append(lowCycleTimeLow[teamNumbers[i]])
+			bubbleSortLowToHigh(variables[number], teamNumbers)
+			for j in range(len(teamNumbers)):
+				rankings[data][j + 1] = teamNumbers[j]
+		elif data == "Average Pilot Gear Drops Per Game" or data == "Average Penalties Per Game":
+			for i in range(len(teamNumbers)):
+				variables[number].append(teamOverall[teamNumbers[i]][data])
 			bubbleSortLowToHigh(variables[number], teamNumbers)
 			for j in range(len(teamNumbers)):
 				rankings[data][j + 1] = teamNumbers[j]
@@ -628,6 +690,14 @@ def bubbleSortLowToHigh(values, numbers): #smallest to biggest
 				del(values[i + 1])
 				del(numbers[i + 1])
 				i -= 1
+			elif values[i] == "N/A":
+				a = values[i]
+				b = numbers[i]
+				values.append(a)
+				numbers.append(b)
+				del(values[i])
+				del(numbers[i])
+				i -= 1
 			elif values[i + 1] < values[i]:
 				tempValue = values[i]
 				tempNumber = numbers[i]
@@ -647,6 +717,14 @@ def bubbleSortHighToLow(values, numbers): #biggest to smallest
 				del(values[i + 1])
 				del(numbers[i + 1])
 				i -= 1
+			elif values[i] == "N/A":
+				a = values[i]
+				b = numbers[i]
+				values.append(a)
+				numbers.append(b)
+				del(values[i])
+				del(numbers[i])
+				i -= 1
 			elif values[i + 1] > values[i]:
 				tempValue = values[i]
 				tempNumber = numbers[i]
@@ -654,6 +732,53 @@ def bubbleSortHighToLow(values, numbers): #biggest to smallest
 				numbers[i] = numbers[i + 1]
 				values[i + 1] = tempValue
 				numbers[i + 1] = tempNumber
+
+def bubbleSortHighToLowThree(values, numbers, backup): #biggest to smallest
+	for onePass in range(len(values) - 1, 0, -1):
+		for i in range(0, onePass):
+			if values[i + 1] == "N/A":
+				a = values[i + 1]
+				b = numbers[i + 1]
+				c = backup[i + 1]
+				values.append(a)
+				numbers.append(b)
+				backup.append(c)
+				del(values[i + 1])
+				del(numbers[i + 1])
+				del(backup[i + 1])
+				i -= 1
+			elif values[i] == "N/A":
+				a = values[i]
+				b = numbers[i]
+				c = backup[i]
+				values.append(a)
+				numbers.append(b)
+				backup.append(c)
+				del(values[i])
+				del(numbers[i])
+				del(backup[i])
+				i -= 1
+			elif values[i + 1] > values[i]:
+				tempValue = values[i]
+				tempNumber = numbers[i]
+				tempBackup = backup[i]
+				values[i] = values[i + 1]
+				numbers[i] = numbers[i + 1]
+				backup[i] = backup[i + 1]
+				values[i + 1] = tempValue
+				numbers[i + 1] = tempNumber
+				backup[i + 1] = tempBackup
+			elif values[i + 1] == values[i]:
+				if backup[i + 1] > backup[i]:
+					tempValue = values[i]
+					tempNumber = numbers[i]
+					tempBackup = backup[i]
+					values[i] = values[i + 1]
+					numbers[i] = numbers[i + 1]
+					backup[i] = backup[i + 1]
+					values[i + 1] = tempValue
+					numbers[i + 1] = tempNumber
+					backup[i + 1] = tempBackup
 
 def generateMatchesWithTeams(teams):
 	matchTeams = {}
@@ -767,12 +892,13 @@ teams = generateDict("oneFile.txt")
 print teams
 print "\n"
 matchTeams = generateMatchesWithTeams(teams)
-print matchTeams
-print "\n"
-checkConsistencyInMatch(matchTeams, teams)
-checkIfDuplicateMatches(teams)
-# overall = generateTeamOverall(teams)
+# print matchTeams
+# print "\n"
+# checkConsistencyInMatch(matchTeams, teams)
+# checkIfDuplicateMatches(teams)
+overall = generateTeamOverall(teams)
 # generateTeamTextFiles(overall)
 # generateMatchesFiles(teams)
-# rankings = generateRankings(overall)
+rankings = generateRankings(overall)
+print rankings
 # generateRankingsFiles(rankings, overall)
